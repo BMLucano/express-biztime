@@ -13,7 +13,8 @@ const db = require("../db");
 */
 
 router.get("/", async function (req, res) {
-  const results = await db.query("SELECT code, name FROM companies");
+  const results = await db.query(`SELECT code, name
+    FROM companies`);
   const companies = results.rows;
 
   return res.json({ companies });
@@ -78,8 +79,10 @@ router.put("/:code", async function (req, res) {
   ) {
     throw new BadRequestError("Need to provide valid json");
   }
+
   const code = req.params.code;
   const { name, description } = req.body;
+
   const results = await db.query(
     `UPDATE companies
         SET name = $1, description = $2
@@ -87,6 +90,7 @@ router.put("/:code", async function (req, res) {
         RETURNING code, name, description`,
     [name, description, code]
   );
+
   const company = results.rows[0];
 
   if (!company) throw new NotFoundError(`No company matching ${code}`);
@@ -109,7 +113,7 @@ router.delete("/:code", async function(req,res){
   const company = results.rows[0];
 
   if (!company) throw new NotFoundError(`No company matching ${code}`);
-  return res.json({ status: "deleted"});
+  return res.json({ status: "deleted" });
 })
 
 
