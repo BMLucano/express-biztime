@@ -20,8 +20,8 @@ router.get("/", async function (req, res) {
 });
 
 /**GET /[code]
- * Return obj of company: {company: {code, name, description}}
- * Return 404 if company not found
+ * Returns obj of company: {company: {code, name, description}}
+ * Returns 404 if company not found
  */
 
 router.get("/:code", async function (req, res) {
@@ -51,7 +51,7 @@ router.post("/", async function (req, res) {
     || !("description" in req.body)
     || !("code" in req.body)
   ) {
-    throw new BadRequestError("Need to provide json");
+    throw new BadRequestError("Need to provide valid json");
   }
 
   const { code, name, description } = req.body;
@@ -65,8 +65,8 @@ router.post("/", async function (req, res) {
 });
 
 /**PUT /[code]
- * Edit existing company.
- * Should return 404 if company cannot be found.
+ * Edits existing company.
+ * Returns 404 if company cannot be found.
  * Needs to be given JSON like: {name, description}
  * Returns update company object: {company: {code, name, description}}
  */
@@ -76,7 +76,7 @@ router.put("/:code", async function (req, res) {
     || !("name"in req.body)
     || !("description" in req.body)
   ) {
-    throw new BadRequestError("Need to provide json");
+    throw new BadRequestError("Need to provide valid json");
   }
   const code = req.params.code;
   const { name, description } = req.body;
@@ -95,8 +95,8 @@ router.put("/:code", async function (req, res) {
 
 /** DELETE /[code]
  * Deletes company.
- * Should return 404 if company cannot be found.
- * Returns {status: "deleted"}*/
+ * Returns 404 if company cannot be found.
+ * Returns {status: "deleted"} if successful*/
 
 router.delete("/:code", async function(req,res){
   const code = req.params.code;
@@ -106,10 +106,10 @@ router.delete("/:code", async function(req,res){
     RETURNING code` ,
     [code]
   );
-  const company = results.row[0];
+  const company = results.rows[0];
 
   if (!company) throw new NotFoundError(`No company matching ${code}`);
-  return req.json({ status: "deleted"});
+  return res.json({ status: "deleted"});
 })
 
 
