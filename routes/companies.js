@@ -13,8 +13,10 @@ const db = require("../db");
 */
 
 router.get("/", async function (req, res) {
-  const results = await db.query(`SELECT code, name
-    FROM companies`);
+  const results = await db.query(
+  `SELECT code, name
+    FROM companies
+    ORDER BY code`);
   const companies = results.rows;
 
   return res.json({ companies });
@@ -45,8 +47,8 @@ router.get("/:code", async function (req, res) {
 
   const iResults = await db.query(
     `SELECT id
-    FROM invoices
-    WHERE comp_code = $1`,
+      FROM invoices
+      WHERE comp_code = $1`,
     [code]
   );
   const invoices = iResults.rows;

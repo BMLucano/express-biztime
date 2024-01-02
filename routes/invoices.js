@@ -15,7 +15,8 @@ const db = require("../db");
 router.get("/", async function (req, res) {
   const results = await db.query(
     `SELECT id, comp_code
-      FROM invoices`);
+      FROM invoices
+      ORDER BY id`);
   const invoices = results.rows;
 
   return res.json({ invoices });
@@ -37,25 +38,28 @@ router.get("/", async function (req, res) {
 
 router.get("/:id", async function (req, res) {
   const id = req.params.id;
+
   const iResults = await db.query(
     `SELECT id, amt, paid, add_date, paid_date, comp_code
-    FROM invoices
-    WHERE id = $1`,
+      FROM invoices
+      WHERE id = $1`,
     [id]
   );
   const invoice = iResults.rows[0];
+
   if (!invoice) throw new NotFoundError(`No invoice matching: ${id}`);
 
   const cResults = await db.query(
     `SELECT code, name, description
-    FROM companies
-    WHERE code = $1`,
+      FROM companies
+      WHERE code = $1`,
     [invoice.comp_code]
   );
   const company = cResults.rows[0];
-  delete invoice.comp_code;
 
+  delete invoice.comp_code;
   invoice.company = company;
+
   return res.json({ invoice });
 });
 
@@ -76,8 +80,8 @@ router.post("/", async function (req, res) {
   try {
     const results = await db.query(
       `INSERT INTO invoices (comp_code, amt)
-      VALUES ($1, $2)
-      RETURNING id, comp_code, amt, paid, add_date, paid_date`,
+        VALUES ($1, $2)
+        RETURNING id, comp_code, amt, paid, add_date, paid_date`,
       [comp_code, Number(amt)]
     );
 
@@ -98,18 +102,24 @@ router.post("/", async function (req, res) {
  * Needs to be passed in a JSON body of {amt}
  * Returns: {invoice: {id, comp_code, amt, paid, add_date, paid_date}}
  */
-//patch-changing
-//put-replacing
+//PUT: Must send ALL fields you can/are being asked for
+//PATCH: Can send things, but not necessarily everything being asked for
+
 router.put("/:id", async function (req, res) {
-  //add validation
+  if (req.body === undefined
+    || !("amt" in req.body)
+  ) {
+    throw new BadRequestError("Need to provide valid json");
+  }
+
   const id = req.params.id;
   const { amt } = req.body;
 
   const results = await db.query(
     `UPDATE invoices
-    SET amt = $1
-    WHERE id = $2
-    RETURNING id, comp_code, amt, paid, add_date, paid_date`,
+      SET amt = $1
+      WHERE id = $2
+      RETURNING id, comp_code, amt, paid, add_date, paid_date`,
     [Number(amt), id]
   );
   const invoice = results.rows[0];
@@ -121,8 +131,8 @@ router.put("/:id", async function (req, res) {
 
 /**DELETE /invoices/[id]
  * Deletes an invoice.
- *If invoice cannot be found, returns a 404.
- Returns: {status: "deleted"}
+ * If invoice cannot be found, returns a 404.
+ * Returns: {status: "deleted"}
  */
 
 router.delete("/:id", async function (req, res) {
@@ -130,8 +140,8 @@ router.delete("/:id", async function (req, res) {
 
   const results = await db.query(
     `DELETE FROM invoices
-    WHERE id = $1
-    RETURNING id`,
+      WHERE id = $1
+      RETURNING id`,
     [id]
   );
   const invoice = results.rows[0];
