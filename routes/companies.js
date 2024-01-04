@@ -11,6 +11,7 @@ const db = require("../db");
 /**GET /
  * Returns list of companies, like {companies: [{code, name}, ...]}
 */
+
 router.get("/", async function (req, res) {
   const results = await db.query("SELECT code, name FROM companies");
   const companies = results.rows;
@@ -22,6 +23,7 @@ router.get("/", async function (req, res) {
  * Return obj of company: {company: {code, name, description}}
  * Return 404 if company not found
  */
+
 router.get("/:code", async function (req, res) {
   const code = req.params.code;
   const results = await db.query(
@@ -45,9 +47,9 @@ router.get("/:code", async function (req, res) {
 
 router.post("/", async function (req, res) {
   if (req.body === undefined
-    || !(name in req.body)
-    || !(description in req.body)
-    || !(code in req.body)
+    || !("name" in req.body)
+    || !("description" in req.body)
+    || !("code" in req.body)
   ) {
     throw new BadRequestError("Need to provide json");
   }
@@ -71,8 +73,8 @@ router.post("/", async function (req, res) {
 
 router.put("/:code", async function (req, res) {
   if (req.body === undefined
-    || !(name in req.body)
-    || !(description in req.body)
+    || !("name"in req.body)
+    || !("description" in req.body)
   ) {
     throw new BadRequestError("Need to provide json");
   }
@@ -91,9 +93,24 @@ router.put("/:code", async function (req, res) {
   return res.json({ company });
 });
 
-/** DELETE /companies/[code]
+/** DELETE /[code]
  * Deletes company.
  * Should return 404 if company cannot be found.
  * Returns {status: "deleted"}*/
+
+router.delete("/:code", async function(req,res){
+  const code = req.params.code;
+  const results = await db.query(
+    `DELETE FROM companies
+    WHERE code = $1
+    RETURNING code` ,
+    [code]
+  );
+  const company = results.row[0];
+
+  if (!company) throw new NotFoundError(`No company matching ${code}`);
+  return req.json({ status: "deleted"});
+})
+
 
 module.exports = router;
