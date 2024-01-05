@@ -21,21 +21,37 @@ router.get("/", async function (req, res) {
 });
 
 /**GET /[code]
- * Returns obj of company: {company: {code, name, description}}
+ * Returns obj of company:
+ *  {company: {
+ *    code,
+ *    name,
+ *    description,
+ *    invoices: [id, ...]}
+ * }
  * Returns 404 if company not found
  */
 
 router.get("/:code", async function (req, res) {
   const code = req.params.code;
-  const results = await db.query(
+  const cResults = await db.query(
     `SELECT code, name, description
         FROM companies
         WHERE code = $1`,
     [code]
   );
-  const company = results.rows[0];
+  const company = cResults.rows[0];
 
   if (!company) throw new NotFoundError(`No company matching ${code}`);
+
+  const iResults = await db.query(
+    `SELECT id
+    FROM invoices
+    WHERE comp_code = $1`,
+    [code]
+  );
+  const invoices = iResults.rows;
+
+  company.invoices = invoices.map(i => i.id);
 
   return res.json({ company });
 });
