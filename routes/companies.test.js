@@ -33,10 +33,27 @@ afterAll(async function() {
 
 describe("/GET company routes", function(){
   test("GET / should get all companies", async function(){
-    const resp = await app.get("/companies");
-    expect (resp.body).toEqual({companies: [
+    const resp = await request(app).get("/companies");
+    expect(resp.body).toEqual({companies: [
       {code: "tst", name: "Test"},
       {code: "tst2", name: "Test2"}]
     });
   });
 });
+
+describe("POST /companies", function(){
+  test("add new company", async function(){
+    const resp = await request(app)
+        .post("/companies")
+        .send({code: "add", name: "testAdd", description: "added test"});
+    expect(resp.statusCode).toEqual(201);
+    expect(resp.body).toEqual({company: {code: "add", name: "testAdd", description: "added test"}})
+
+    //test database
+    const results = await db.query(
+    `SELECT * FROM companies WHERE name = 'testAdd'`
+    )
+    expect(results.rows.length).toEqual(1);
+  });
+
+} )
